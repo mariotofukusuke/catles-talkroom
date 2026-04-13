@@ -51,7 +51,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 .img-thumb{width:160px;height:160px;border-radius:10px;object-fit:cover;display:block;border:1px solid var(--border);cursor:pointer}
 .dl-btn{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px}
 .dl-btn svg{width:12px;height:12px;stroke:#fff}
-.input-area{padding:8px 12px 12px;border-top:1px solid var(--border);background:var(--white)}
+.input-area{padding:8px 12px 16px;border-top:1px solid var(--border);background:var(--white)}
 .prev-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
 .prev-item{position:relative;width:50px;height:50px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
 .prev-item img{width:100%;height:100%;object-fit:cover}
@@ -79,7 +79,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 .step-name.now{color:var(--green);font-weight:600}
 .step-now-label{font-size:11px;color:var(--green);margin-top:2px}
 .order-card{background:#f9f9f9;border-radius:12px;padding:14px;margin-top:16px;border:1px solid var(--border)}
-.seller-step-bar{border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;background:var(--white)}
+.seller-step-bar{border-top:1px solid var(--border);padding:10px 14px 16px;display:flex;gap:8px;background:var(--white)}
 .prog-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--white);font-size:13px;color:var(--text-sub);cursor:pointer;text-align:center;font-family:inherit}
 .prog-btn.next{background:var(--green);border-color:var(--green);color:#fff;font-weight:500}
 .files-view{flex:1;overflow-y:auto;padding:14px}
@@ -110,9 +110,9 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
       <div class="av av-buyer" id="topAv">さ</div>
       <div class="top-info">
         <div class="top-name" id="topName">田中 さくら さん</div>
-        <div class="top-sub">注文 #2024-0411 · F4号キャンバス</div>
+        <div class="top-sub" id="topSub">接続中...</div>
       </div>
-      <div class="status-pill" id="statusPill">制作中</div>
+      <div class="status-pill" id="statusPill">-</div>
     </div>
   </div>
   <div class="tabs">
@@ -143,11 +143,11 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
     <div class="progress-view">
       <div class="prog-title">取引の流れ</div>
       <div id="stepList"></div>
-      <div class="order-card">
+      <div class="order-card" id="orderCard">
         <div style="font-size:11px;color:var(--text-sub);margin-bottom:8px">注文情報</div>
-        <div style="font-size:14px;color:var(--text);margin-bottom:4px">F4号キャンバス · 猫2匹</div>
-        <div style="font-size:16px;font-weight:600;color:var(--text)">¥9,000</div>
-        <div style="font-size:11px;color:var(--text-sub);margin-top:4px">販売日 2026年4月11日</div>
+        <div style="font-size:14px;color:var(--text);margin-bottom:4px" id="orderItem">-</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text)" id="orderPrice">-</div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:4px" id="orderDate">-</div>
       </div>
     </div>
     <div class="seller-step-bar" id="sellerStepBar"></div>
@@ -177,7 +177,10 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const storage = getStorage(app);
 
-const ROOM_ID = "order-2024-0411";
+// URLパラメータから注文番号を取得 例: ?room=1001
+const params = new URLSearchParams(window.location.search);
+const ROOM_ID = params.get('room') || 'order-2024-0411';
+
 const steps = ['購入完了','デザイン制作中','パネル制作中','発送完了'];
 const statusLabels = ['受付済み','デザイン制作中','パネル制作中','発送完了'];
 let role = 'seller';
@@ -245,6 +248,23 @@ function renderSteps() {
     bar.appendChild(b);
   }
 }
+
+// 注文情報をFirebaseから取得して表示
+onValue(ref(db, `rooms/${ROOM_ID}/info`), snapshot => {
+  const info = snapshot.val();
+  if (info) {
+    document.getElementById('topSub').textContent = `注文 #${ROOM_ID} · ${info.item || ''}`;
+    document.getElementById('orderItem').textContent = info.item || '-';
+    document.getElementById('orderPrice').textContent = info.price ? `¥${Number(info.price).toLocaleString()}` : '-';
+    document.getElementById('orderDate').textContent = info.date ? `販売日 ${info.date}` : '-';
+    if (info.buyerName) {
+      document.getElementById('topName').textContent = info.buyerName + ' さん';
+      document.getElementById('topAv').textContent = info.buyerName.charAt(0);
+    }
+  } else {
+    document.getElementById('topSub').textContent = `注文 #${ROOM_ID}`;
+  }
+});
 
 onValue(ref(db, `rooms/${ROOM_ID}/step`), snapshot => {
   currentStep = snapshot.val() !== null ? snapshot.val() : 1;
