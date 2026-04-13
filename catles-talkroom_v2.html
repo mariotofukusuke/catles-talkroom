@@ -178,8 +178,8 @@ const db = getDatabase(app);
 const storage = getStorage(app);
 
 const ROOM_ID = "order-2024-0411";
-const steps = ['購入完了','進行中','納品送付','取引完了','評価完了'];
-const statusLabels = ['受付済み','制作中','納品済み','取引完了','完了'];
+const steps = ['購入完了','デザイン制作中','パネル制作中','発送完了'];
+const statusLabels = ['受付済み','デザイン制作中','パネル制作中','発送完了'];
 let role = 'seller';
 let pending = [];
 let currentStep = 1;
