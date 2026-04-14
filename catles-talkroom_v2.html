@@ -380,7 +380,14 @@ async function send() {
 }
 
 renderSteps();
-document.getElementById('sellerStepBar').style.display = 'flex';
+if (role === 'buyer') {
+  document.getElementById('topAv').textContent = 'C';
+  document.getElementById('topAv').className = 'av av-seller';
+  document.getElementById('topName').textContent = 'CATLES';
+  document.getElementById('sellerStepBar').style.display = 'none';
+} else {
+  document.getElementById('sellerStepBar').style.display = 'flex';
+}
 </script>
 </body>
 </html>
