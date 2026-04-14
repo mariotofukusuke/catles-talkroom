@@ -179,6 +179,7 @@ const storage = getStorage(app);
 
 // URLパラメータから注文番号を取得 例: ?room=1001
 const params = new URLSearchParams(window.location.search);
+const ROOM_ID = params.get('room') || 'default';
 document.getElementById('topSub').textContent = `注文 #${ROOM_ID}`;
 
 const steps = ['購入完了','デザイン制作中','パネル制作中','発送完了'];
