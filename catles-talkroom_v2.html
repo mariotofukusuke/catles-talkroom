@@ -103,7 +103,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
       </button>
       <div class="av av-buyer" id="topAv">さ</div>
       <div class="top-info">
-        <div class="top-name" id="topName">田中 さくら さん</div>
+        <div class="top-name" id="topName">お客様</div>
         <div class="top-sub" id="topSub">接続中...</div>
       </div>
       <div class="status-pill" id="statusPill">-</div>
@@ -171,13 +171,17 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const storage = getStorage(app);
 
-// URLパラメータから注文番号を取得 例: ?room=1001
+// URLパラメータから注文番号と顧客名を取得
 const params = new URLSearchParams(window.location.search);
 const roomParam = params.get('room');
 const pathMatch = document.referrer.match(/orders\/(\d+)/);
 const titleMatch = document.title.match(/#(\d+)/);
 const ROOM_ID = roomParam || (titleMatch ? titleMatch[1] : 'default');
+const CUSTOMER_NAME = decodeURIComponent(params.get('name') || 'お客様');
+
 document.getElementById('topSub').textContent = `注文 #${ROOM_ID}`;
+document.getElementById('topName').textContent = CUSTOMER_NAME + ' さん';
+document.getElementById('topAv').textContent = CUSTOMER_NAME.charAt(0);
 
 const steps = ['購入完了','デザイン制作中','パネル制作中','発送完了'];
 const statusLabels = ['受付済み','デザイン制作中','パネル制作中','発送完了'];
@@ -196,9 +200,9 @@ function setRole(r, btn) {
   document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const isSeller = r === 'seller';
-  document.getElementById('topAv').textContent = isSeller ? 'さ' : 'C';
+  document.getElementById('topAv').textContent = isSeller ? CUSTOMER_NAME.charAt(0) : 'C';
   document.getElementById('topAv').className = 'av ' + (isSeller ? 'av-buyer' : 'av-seller');
-  document.getElementById('topName').textContent = isSeller ? '田中 さくら さん' : 'CATLES';
+  document.getElementById('topName').textContent = isSeller ? CUSTOMER_NAME + ' さん' : 'CATLES';
   document.getElementById('sellerStepBar').style.display = isSeller ? 'flex' : 'none';
 }
 window.setRole = setRole;
@@ -288,8 +292,8 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
     const w = document.createElement('div');
     w.className = 'msg-wrap ' + (isMe ? 'me' : 'other');
     const avClass = isSeller ? 'av-seller' : 'av-buyer';
-    const avText = isSeller ? 'C' : 'さ';
-    const name = isSeller ? 'CATLES' : '田中 さくら';
+    const avText = isSeller ? 'C' : CUSTOMER_NAME.charAt(0);
+    const name = isSeller ? 'CATLES' : CUSTOMER_NAME;
     let imgHtml = '';
     if (msg.imageUrl) {
       imgHtml = `<div class="img-wrap">
