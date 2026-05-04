@@ -46,6 +46,8 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 .bubble{max-width:80%;padding:9px 12px;font-size:14px;line-height:1.65;word-break:break-word}
 .bubble.me{background:var(--white);border:1.5px solid var(--border);color:var(--text);border-radius:3px 14px 14px 14px}
 .bubble.other{background:var(--blue-light);border:1.5px solid var(--blue-border);color:#1a2a5a;border-radius:3px 14px 14px 14px}
+.bubble.seller{background:var(--pink-light);border:1.5px solid var(--pink-border);color:#5a1a3a;border-radius:3px 14px 14px 14px}
+.bubble.buyer{background:var(--blue-light);border:1.5px solid var(--blue-border);color:#1a2a5a;border-radius:3px 14px 14px 14px}
 .msg-time{font-size:10px;color:var(--text-hint)}
 .msg-wrap.me .msg-time{text-align:right}
 .img-wrap{position:relative;display:inline-block;margin-top:6px}
@@ -289,10 +291,8 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
     const isMe = msg.role === role;
     const w = document.createElement('div');
     w.className = 'msg-wrap other';
-    // seller=水色（重要）、buyer=白で固定
-    const avClass = isSeller ? 'av-seller' : 'av-buyer';
-    const bubbleClass = isMe ? 'me' : 'other';
-    const avText = isSeller ? 'C' : CUSTOMER_NAME.charAt(0);
+    // 自分=白、CATLES=ピンク系、お客様=水色系
+    const bubbleClass = isMe ? 'me' : (isSeller ? 'seller' : 'buyer');
     const name = isSeller ? 'CATLES' : CUSTOMER_NAME;
     let imgHtml = '';
     if (msg.imageUrl) {
@@ -306,7 +306,6 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
     }
     w.innerHTML = `
       <div class="msg-header">
-        <div class="av ${avClass}" style="width:22px;height:22px;font-size:10px">${avText}</div>
         <span>${name}</span>
       </div>
       <div class="bubble ${bubbleClass}">${msg.text?msg.text.replace(/</g,'&lt;'):''}${imgHtml}</div>
