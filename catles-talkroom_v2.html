@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -95,6 +96,13 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 </head>
 <body>
 
+<div class="dev-bar">
+  <span>プレビュー</span>
+  <div class="role-toggle">
+    <button class="role-btn active" onclick="setRole('seller',this)">販売者</button>
+    <button class="role-btn" onclick="setRole('buyer',this)">購入者</button>
+  </div>
+</div>
 <div class="screen">
   <div class="top-bar">
     <div class="top-bar-inner">
@@ -288,7 +296,9 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
     const isMe = msg.role === role;
     const w = document.createElement('div');
     w.className = 'msg-wrap ' + (isMe ? 'me' : 'other');
+    // seller=ピンク、buyer=水色（roleに関わらず固定）
     const avClass = isSeller ? 'av-seller' : 'av-buyer';
+    const bubbleClass = isSeller ? 'me' : 'other';
     const avText = isSeller ? 'C' : CUSTOMER_NAME.charAt(0);
     const name = isSeller ? 'CATLES' : CUSTOMER_NAME;
     let imgHtml = '';
@@ -306,7 +316,7 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
         <div class="av ${avClass}" style="width:22px;height:22px;font-size:10px">${avText}</div>
         <span>${name}</span>
       </div>
-      <div class="bubble ${isMe?'me':'other'}">${msg.text?msg.text.replace(/</g,'&lt;'):''}${imgHtml}</div>
+      <div class="bubble ${bubbleClass}">${msg.text?msg.text.replace(/</g,'&lt;'):''}${imgHtml}</div>
       <div class="msg-time">${msg.datetime||''}</div>`;
     msgs.appendChild(w);
   });
