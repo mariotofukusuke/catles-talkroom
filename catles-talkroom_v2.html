@@ -370,13 +370,21 @@ function renderPrev() {
   const row = document.getElementById('prevRow');
   row.innerHTML = '';
   pending.forEach((f, i) => {
-    const isVideo = f.name && f.name.match(/\.(mp4|mov|webm|avi)$/i);
+    const ext = f.name ? f.name.split('.').pop().toLowerCase() : '';
+    let inner = '';
+    if (['mp4','mov','webm','avi'].includes(ext)) {
+      inner = `<div style="width:100%;height:100%;background:#222;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-film" style="color:#fff;font-size:20px;"></i></div>`;
+    } else if (['jpg','jpeg','png','gif','webp','heic'].includes(ext)) {
+      inner = `<img src="${f.url}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else if (['pdf'].includes(ext)) {
+      inner = `<div style="width:100%;height:100%;background:#e74c3c;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-file-pdf" style="color:#fff;font-size:20px;"></i></div>`;
+    } else if (['zip','rar','7z'].includes(ext)) {
+      inner = `<div style="width:100%;height:100%;background:#f39c12;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-file-zipper" style="color:#fff;font-size:20px;"></i></div>`;
+    } else {
+      inner = `<div style="width:100%;height:100%;background:#95a5a6;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-file" style="color:#fff;font-size:20px;"></i></div>`;
+    }
     const d = document.createElement('div'); d.className = 'prev-item';
-    d.innerHTML = isVideo
-      ? `<div style="width:100%;height:100%;background:#222;display:flex;align-items:center;justify-content:center;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        </div><div class="prev-rm" data-i="${i}">×</div>`
-      : `<img src="${f.url}"><div class="prev-rm" data-i="${i}">×</div>`;
+    d.innerHTML = `${inner}<div class="prev-rm" data-i="${i}">×</div>`;
     row.appendChild(d);
   });
   row.querySelectorAll('.prev-rm').forEach(b => b.addEventListener('click', () => { pending.splice(+b.dataset.i,1); renderPrev(); }));
