@@ -298,16 +298,29 @@ if (msg.role !== role && !msg[`read_${role}`]) {
     const otherRole = role === 'seller' ? 'buyer' : 'seller';
     const isRead = isMe && msg[`read_${otherRole}`];
     
-    let imgHtml = '';
-    if (msg.imageUrl) {
-      imgHtml = `<div class="img-wrap">
-        <img class="img-thumb" src="${msg.imageUrl}" alt="画像" onclick="window.open('${msg.imageUrl}','_blank')">
-        <a class="dl-btn" href="${msg.imageUrl}" download target="_blank">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          保存
-        </a>
-      </div>`;
-    }
+let imgHtml = '';
+if (msg.imageUrl) {
+  const isVideo = msg.imageName && msg.imageName.match(/\.(mp4|mov|webm|avi)$/i);
+  if (isVideo) {
+    imgHtml = `<div class="img-wrap">
+      <video style="width:160px;border-radius:10px;display:block;" controls>
+        <source src="${msg.imageUrl}">
+      </video>
+      <a class="dl-btn" href="${msg.imageUrl}" download target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        保存
+      </a>
+    </div>`;
+  } else {
+    imgHtml = `<div class="img-wrap">
+      <img class="img-thumb" src="${msg.imageUrl}" alt="画像" onclick="window.open('${msg.imageUrl}','_blank')">
+      <a class="dl-btn" href="${msg.imageUrl}" download target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        保存
+      </a>
+    </div>`;
+  }
+}
     w.innerHTML = `
       <div class="msg-header">
         <span>${name}</span>
