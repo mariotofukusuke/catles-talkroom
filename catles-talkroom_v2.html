@@ -478,6 +478,7 @@ async function initNotifications() {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: reg
     });
+    console.log('FCM token:', token);
     if (token) {
       await set(ref(db, `rooms/${ROOM_ID}/fcmTokens/${role}`), token);
     }
