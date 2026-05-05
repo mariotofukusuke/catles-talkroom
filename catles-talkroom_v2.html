@@ -465,6 +465,7 @@ document.addEventListener('visibilitychange', () => {
 const VAPID_KEY = 'BDeKJtSrglRWJZ91Q4sMtBUiLrwLLPNjkI_ncWlurF9c56dLFTT3eq7M9FJlehbbXC4TIbwkIf7nj7g_0BlSoNM';
 
 async function initNotifications() {
+  console.log('initNotifications called');
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
   try {
     const permission = await Notification.requestPermission();
@@ -479,7 +480,7 @@ async function initNotifications() {
       await set(ref(db, `rooms/${ROOM_ID}/fcmTokens/${role}`), token);
     }
   } catch (e) {
-    console.warn('通知の初期化に失敗:', e);
+    console.error('通知の初期化に失敗:', e);
   }
 }
 
