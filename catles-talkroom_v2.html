@@ -147,8 +147,9 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, set, update, onDisconnect } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-storage.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAABNAG7dbMMvuVnwgYtqXvFxnzVum6nQA",
@@ -164,6 +165,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const storage = getStorage(app);
+const messaging = getMessaging(app);
 
 const params = new URLSearchParams(window.location.search);
 const roomParam = params.get('room');
@@ -447,6 +449,44 @@ if (role === 'buyer') {
 } else {
   document.getElementById('sellerStepBar').style.display = 'flex';
 }
+
+// --- プレゼンス管理 ---
+// 自分がトークルームを開いているかをDBに記録し、Cloud Functionsが通知判断に使う
+const presenceRef = ref(db, `rooms/${ROOM_ID}/presence/${role}`);
+set(presenceRef, true);
+onDisconnect(presenceRef).set(false);
+document.addEventListener('visibilitychange', () => {
+  set(presenceRef, !document.hidden);
+});
+
+// --- FCMプッシュ通知 ---
+// VAPID キーは Firebase Console > プロジェクト設定 > Cloud Messaging >
+// ウェブ設定 > ウェブプッシュ証明書 で生成してから差し替えてください
+const VAPID_KEY = 'BDeKJtSrglRWJZ91Q4sMtBUiLrwLLPNjkI_ncWlurF9c56dLFTT3eq7M9FJlehbbXC4TIbwkIf7nj7g_0BlSoNM';
+
+async function initNotifications() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: reg
+    });
+    if (token) {
+      await set(ref(db, `rooms/${ROOM_ID}/fcmTokens/${role}`), token);
+    }
+  } catch (e) {
+    console.warn('通知の初期化に失敗:', e);
+  }
+}
+
+// フォアグラウンド時はリアルタイムリスナーが画面を更新するため通知不要
+onMessage(messaging, () => {});
+
+initNotifications();
 </script>
 </body>
 </html>
