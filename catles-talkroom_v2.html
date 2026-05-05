@@ -264,12 +264,15 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
   
   const entries = Object.entries(data);
   let lastDate = '';
-  
+
+
   entries.forEach(([key, msg]) => {
     // 相手のメッセージを既読にする
-    if (msg.role !== role && !msg[`read_${role}`]) {
-      update(ref(db, `rooms/${ROOM_ID}/messages/${key}`), { [`read_${role}`]: true });
-    }
+if (msg.role !== role && !msg[`read_${role}`]) {
+  setTimeout(() => {
+    update(ref(db, `rooms/${ROOM_ID}/messages/${key}`), { [`read_${role}`]: true });
+  }, 100);
+}
     
     const msgDate = msg.datetime ? msg.datetime.split(' ')[0] : '';
     if (msgDate !== lastDate) {
