@@ -300,7 +300,6 @@ if (msg.role !== role && !msg[`read_${role}`]) {
     const isRead = isMe && msg[`read_${otherRole}`];
     
 let imgHtml = '';
-let imgHtml = '';
 if (msg.imageUrl) {
   const ext = msg.imageName ? msg.imageName.split('.').pop().toLowerCase() : '';
   const isVideo = ['mp4','mov','webm','avi'].includes(ext);
