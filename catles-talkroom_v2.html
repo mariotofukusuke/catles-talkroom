@@ -300,8 +300,14 @@ if (msg.role !== role && !msg[`read_${role}`]) {
     const isRead = isMe && msg[`read_${otherRole}`];
     
 let imgHtml = '';
+let imgHtml = '';
 if (msg.imageUrl) {
-  const isVideo = msg.imageName && msg.imageName.match(/\.(mp4|mov|webm|avi)$/i);
+  const ext = msg.imageName ? msg.imageName.split('.').pop().toLowerCase() : '';
+  const isVideo = ['mp4','mov','webm','avi'].includes(ext);
+  const isImage = ['jpg','jpeg','png','gif','webp','heic'].includes(ext);
+  const isPdf = ext === 'pdf';
+  const isZip = ['zip','rar','7z'].includes(ext);
+
   if (isVideo) {
     imgHtml = `<div class="img-wrap">
       <video style="width:160px;border-radius:10px;display:block;" controls>
@@ -312,9 +318,22 @@ if (msg.imageUrl) {
         保存
       </a>
     </div>`;
-  } else {
+  } else if (isImage) {
     imgHtml = `<div class="img-wrap">
       <img class="img-thumb" src="${msg.imageUrl}" alt="画像" onclick="window.open('${msg.imageUrl}','_blank')">
+      <a class="dl-btn" href="${msg.imageUrl}" download target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        保存
+      </a>
+    </div>`;
+  } else {
+    const iconColor = isPdf ? '#e74c3c' : isZip ? '#f39c12' : '#95a5a6';
+    const iconClass = isPdf ? 'fa-file-pdf' : isZip ? 'fa-file-zipper' : 'fa-file';
+    imgHtml = `<div class="img-wrap">
+      <div style="width:160px;padding:16px;background:#f9f9f9;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <i class="fa-solid ${iconClass}" style="color:${iconColor};font-size:36px;"></i>
+        <div style="font-size:11px;color:var(--text-sub);word-break:break-all;text-align:center;">${msg.imageName||'ファイル'}</div>
+      </div>
       <a class="dl-btn" href="${msg.imageUrl}" download target="_blank">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         保存
