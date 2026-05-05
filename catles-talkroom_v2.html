@@ -312,7 +312,7 @@ if (msg.role !== role && !msg[`read_${role}`]) {
       <div class="msg-header">
         <span>${name}</span>
       </div>
-      <div class="bubble ${bubbleClass}">${msg.text?msg.text.replace(/</g,'&lt;'):''}${imgHtml}</div>
+     <div class="bubble ${bubbleClass}">${msg.text?`<div>${msg.text.replace(/</g,'&lt;')}</div>`:''}${imgHtml}</div>
       <div class="msg-time">${msg.datetime||''}${isRead ? ' <span class="msg-read">既読</span>' : ''}</div>`;
     msgs.appendChild(w);
   });
