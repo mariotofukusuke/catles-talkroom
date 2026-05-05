@@ -486,7 +486,11 @@ async function initNotifications() {
 // フォアグラウンド時はリアルタイムリスナーが画面を更新するため通知不要
 onMessage(messaging, () => {});
 
-document.addEventListener('DOMContentLoaded', () => initNotifications());
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => initNotifications());
+} else {
+  initNotifications();
+}
 </script>
 </body>
 </html>
