@@ -472,6 +472,8 @@ async function initNotifications() {
     if (permission !== 'granted') return;
 
     const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    console.log('SW ready, getting token...');
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: reg
