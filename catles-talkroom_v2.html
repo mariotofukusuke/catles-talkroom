@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -14,11 +13,6 @@
   --text-sub:#666;--text-hint:#999;
 }
 body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
-.dev-bar{width:100%;background:#1a1a1a;color:#fff;padding:8px 16px;display:flex;align-items:center;gap:10px;font-size:12px}
-.dev-bar span{opacity:0.6}
-.role-toggle{display:flex;gap:4px;margin-left:auto}
-.role-btn{padding:4px 12px;border-radius:12px;border:1px solid #444;font-size:11px;cursor:pointer;background:transparent;color:#ccc}
-.role-btn.active{background:var(--pink);border-color:var(--pink);color:#fff}
 .screen{width:100%;max-width:430px;height:100svh;background:var(--white);display:flex;flex-direction:column;overflow:hidden}
 .top-bar{padding:12px 16px 10px;border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:10}
 .top-bar-inner{display:flex;align-items:center;gap:10px}
@@ -39,17 +33,14 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 .date-sep{text-align:center;font-size:11px;color:var(--text-hint);margin:6px 0;display:flex;align-items:center;gap:8px}
 .date-sep::before,.date-sep::after{content:'';flex:1;height:1px;background:var(--border)}
 .msg-wrap{display:flex;flex-direction:column;gap:3px}
-.msg-wrap.me{align-items:flex-end}
 .msg-wrap.other{align-items:flex-start}
 .msg-header{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-sub)}
-.msg-wrap.me .msg-header{flex-direction:row-reverse}
 .bubble{max-width:95%;padding:9px 12px;font-size:14px;line-height:1.65;word-break:break-word}
 .bubble.me{background:var(--white);border:1.5px solid var(--border);color:var(--text);border-radius:3px 14px 14px 14px}
-.bubble.other{background:var(--blue-light);border:1.5px solid var(--blue-border);color:#1a2a5a;border-radius:3px 14px 14px 14px}
 .bubble.seller{background:var(--pink-light);border:1.5px solid var(--pink-border);color:#5a1a3a;border-radius:3px 14px 14px 14px}
 .bubble.buyer{background:var(--blue-light);border:1.5px solid var(--blue-border);color:#1a2a5a;border-radius:3px 14px 14px 14px}
 .msg-time{font-size:10px;color:var(--text-hint)}
-.msg-wrap.me .msg-time{text-align:right}
+.msg-read{font-size:10px;color:var(--pink);margin-top:1px}
 .img-wrap{position:relative;display:inline-block;margin-top:6px}
 .img-thumb{width:160px;height:160px;border-radius:10px;object-fit:cover;display:block;border:1px solid var(--border);cursor:pointer}
 .dl-btn{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px}
@@ -156,7 +147,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -176,9 +167,12 @@ const storage = getStorage(app);
 
 const params = new URLSearchParams(window.location.search);
 const roomParam = params.get('room');
-const titleMatch = document.title.match(/#(\d+)/);
-const ROOM_ID = roomParam || (titleMatch ? titleMatch[1] : 'default');
-const CUSTOMER_NAME = decodeURIComponent(params.get('name') || 'お客様');
+const ROOM_ID = roomParam || 'default';
+const CUSTOMER_NAME = decodeURIdate(params.get('name') || 'お客様');
+
+function decodeURIdate(s) {
+  try { return decodeURIComponent(s); } catch(e) { return s; }
+}
 
 document.getElementById('topSub').textContent = `注文 #${ROOM_ID}`;
 document.getElementById('topName').textContent = CUSTOMER_NAME + ' さん';
@@ -195,18 +189,6 @@ function getDateTime() {
   const now = new Date();
   return `${now.getMonth()+1}月${now.getDate()}日 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
 }
-
-function setRole(r, btn) {
-  role = r;
-  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const isSeller = r === 'seller';
-  document.getElementById('topAv').textContent = isSeller ? CUSTOMER_NAME.charAt(0) : 'C';
-  document.getElementById('topAv').className = 'av ' + (isSeller ? 'av-buyer' : 'av-seller');
-  document.getElementById('topName').textContent = isSeller ? CUSTOMER_NAME + ' さん' : 'CATLES';
-  document.getElementById('sellerStepBar').style.display = isSeller ? 'flex' : 'none';
-}
-window.setRole = setRole;
 
 function switchTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -279,21 +261,34 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
   msgs.innerHTML = '';
   const data = snapshot.val();
   if (!data) { msgs.innerHTML = '<div class="hint">メッセージはまだありません</div>'; return; }
+  
+  const entries = Object.entries(data);
   let lastDate = '';
-  Object.values(data).forEach(msg => {
+  
+  entries.forEach(([key, msg]) => {
+    // 相手のメッセージを既読にする
+    if (msg.role !== role && !msg[`read_${role}`]) {
+      update(ref(db, `rooms/${ROOM_ID}/messages/${key}`), { [`read_${role}`]: true });
+    }
+    
     const msgDate = msg.datetime ? msg.datetime.split(' ')[0] : '';
     if (msgDate !== lastDate) {
       const sep = document.createElement('div');
       sep.className = 'date-sep'; sep.textContent = msgDate;
       msgs.appendChild(sep); lastDate = msgDate;
     }
+    
     const isSeller = msg.role === 'seller';
     const isMe = msg.role === role;
     const w = document.createElement('div');
     w.className = 'msg-wrap other';
-    // 自分=白、CATLES=ピンク系、お客様=水色系
     const bubbleClass = isMe ? 'me' : (isSeller ? 'seller' : 'buyer');
     const name = isSeller ? 'CATLES' : CUSTOMER_NAME;
+    
+    // 既読判定：自分のメッセージで相手が読んだか
+    const otherRole = role === 'seller' ? 'buyer' : 'seller';
+    const isRead = isMe && msg[`read_${otherRole}`];
+    
     let imgHtml = '';
     if (msg.imageUrl) {
       imgHtml = `<div class="img-wrap">
@@ -309,7 +304,7 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
         <span>${name}</span>
       </div>
       <div class="bubble ${bubbleClass}">${msg.text?msg.text.replace(/</g,'&lt;'):''}${imgHtml}</div>
-      <div class="msg-time">${msg.datetime||''}</div>`;
+      <div class="msg-time">${msg.datetime||''}${isRead ? ' <span class="msg-read">既読</span>' : ''}</div>`;
     msgs.appendChild(w);
   });
   msgs.scrollTop = msgs.scrollHeight;
