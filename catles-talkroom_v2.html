@@ -256,11 +256,14 @@ onValue(ref(db, `rooms/${ROOM_ID}/step`), snapshot => {
   renderSteps();
 });
 
+let lastSnapshot = null;
+
 onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
+  const raw = JSON.stringify(snapshot.val());
+  if (raw === lastSnapshot) return;
+  lastSnapshot = raw;
+  
   const msgs = document.getElementById('messages');
-  const prevCount = msgs.querySelectorAll('.msg-wrap').length;
-  const newCount = snapshot.val() ? Object.keys(snapshot.val()).length : 0;
-  if (prevCount === newCount) return;
   msgs.innerHTML = '';
   const data = snapshot.val();
   if (!data) { msgs.innerHTML = '<div class="hint">メッセージはまだありません</div>'; return; }
