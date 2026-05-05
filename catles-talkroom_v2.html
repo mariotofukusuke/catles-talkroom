@@ -282,7 +282,7 @@ onValue(ref(db, `rooms/${ROOM_ID}/messages`), snapshot => {
     const isMe = msg.role === role;
     const w = document.createElement('div');
     w.className = 'msg-wrap other';
-    const bubbleClass = isMe ? 'me' : (isSeller ? 'seller' : 'buyer');
+    const bubbleClass = isSeller ? 'seller' : 'buyer';
     const name = isSeller ? 'CATLES' : CUSTOMER_NAME;
     
     // 既読判定：自分のメッセージで相手が読んだか
