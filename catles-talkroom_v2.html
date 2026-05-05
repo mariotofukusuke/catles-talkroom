@@ -165,7 +165,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const storage = getStorage(app);
-const messaging = getMessaging(app);
+window.messaging = getMessaging(app);
 
 const params = new URLSearchParams(window.location.search);
 const roomParam = params.get('room');
