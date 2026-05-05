@@ -486,7 +486,7 @@ async function initNotifications() {
 // フォアグラウンド時はリアルタイムリスナーが画面を更新するため通知不要
 onMessage(messaging, () => {});
 
-initNotifications();
+document.addEventListener('DOMContentLoaded', () => initNotifications());
 </script>
 </body>
 </html>
