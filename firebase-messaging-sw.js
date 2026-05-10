@@ -14,12 +14,26 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(payload => {
-  const title = payload.notification?.title || '新しいメッセージ';
-  const body  = payload.notification?.body  || 'メッセージが届きました';
+  const data = payload.data || {};
+  const title = data.title || '新しいメッセージ';
+  const body  = data.body  || 'メッセージが届きました';
   self.registration.showNotification(title, {
     body,
-    icon: payload.notification?.icon || 'https://mariotofukusuke.github.io/catles-talkroom/icon-192.png',
+    icon: 'https://mariotofukusuke.github.io/catles-talkroom/icon-192.png',
     badge: 'https://mariotofukusuke.github.io/catles-talkroom/badge-72.png',
-    data: payload.data
+    data: { link: data.link }
   });
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const link = event.notification.data?.link;
+  if (!link) return;
+  event.waitUntil((async () => {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of allClients) {
+      if (client.url.includes(link) && 'focus' in client) return client.focus();
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(link);
+  })());
 });

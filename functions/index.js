@@ -46,14 +46,10 @@ exports.sendPushOnMessage = onValueCreated(
     try {
       await getMessaging().send({
         token,
-        notification: {
+        data: {
           title: `${senderName} からメッセージ`,
-          body
-        },
-        webpush: {
-          fcmOptions: {
-            link: `https://catles-talkroom.web.app/?room=${roomId}&role=${recipientRole}`
-          }
+          body,
+          link: `https://catles-talkroom.web.app/?room=${roomId}&role=${recipientRole}`
         }
       });
     } catch (e) {
