@@ -18,7 +18,8 @@ messaging.onBackgroundMessage(payload => {
   const body  = payload.notification?.body  || 'メッセージが届きました';
   self.registration.showNotification(title, {
     body,
-    icon: payload.notification?.icon || '/icon-192.png',
+    icon: payload.notification?.icon || 'https://mariotofukusuke.github.io/catles-talkroom/icon-192.png',
+    badge: 'https://mariotofukusuke.github.io/catles-talkroom/badge-72.png',
     data: payload.data
   });
 });
