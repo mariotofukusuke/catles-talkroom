@@ -190,9 +190,14 @@ if (role === 'buyer') {
   const providedToken = params.get('token');
   const storedSnap = await get(ref(db, `rooms/${ROOM_ID}/token`));
   const storedToken = storedSnap.val();
-  if (!providedToken || !storedToken || providedToken !== storedToken) {
-    document.body.innerHTML = '<div style="padding:48px 20px;text-align:center;font-family:sans-serif;color:#333;"><h2 style="margin:0 0 12px">アクセスできません</h2><p style="margin:0;color:#666;">このリンクは無効です。<br>注文ページから再度お開きください。</p></div>';
-    throw new Error('Invalid or missing token');
+  const blockHtml = '<div style="padding:48px 20px;text-align:center;font-family:sans-serif;color:#333;"><h2 style="margin:0 0 12px">アクセスできません</h2><p style="margin:0;color:#666;">このリンクは無効です。<br>注文ページから再度お開きください。</p></div>';
+  if (!storedToken) {
+    document.body.innerHTML = blockHtml;
+    throw new Error('Room not found');
+  }
+  if (providedToken && providedToken !== storedToken) {
+    document.body.innerHTML = blockHtml;
+    throw new Error('Invalid token');
   }
 }
 
