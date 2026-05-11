@@ -172,19 +172,25 @@ const roomParam = params.get('room');
 const ROOM_ID = roomParam || 'default';
 const CUSTOMER_NAME = decodeURIdate(params.get('name') || 'お客様');
 const ORDER_NAME_PARAM = decodeURIdate(params.get('orderName') || '');
+const roleParam = params.get('role');
+let role = roleParam || 'seller';
 
 function decodeURIdate(s) {
   try { return decodeURIComponent(s); } catch(e) { return s; }
 }
 
 document.getElementById('topSub').textContent = `注文 ${ORDER_NAME_PARAM || '#' + ROOM_ID}`;
-document.getElementById('topName').textContent = CUSTOMER_NAME + ' さん';
-document.getElementById('topAv').textContent = CUSTOMER_NAME.charAt(0);
+if (role === 'seller') {
+  document.getElementById('topName').textContent = CUSTOMER_NAME + ' さん';
+  document.getElementById('topAv').textContent = CUSTOMER_NAME.charAt(0);
+} else {
+  document.getElementById('topName').textContent = 'CATLES';
+  document.getElementById('topAv').textContent = 'C';
+  document.getElementById('topAv').className = 'av av-seller';
+}
 
 const steps = ['購入完了','デザイン制作中','パネル制作中','発送完了'];
 const statusLabels = ['受付済み','デザイン制作中','パネル制作中','発送完了'];
-const roleParam = params.get('role');
-let role = roleParam || 'seller';
 
 if (role === 'buyer') {
   const providedToken = params.get('token');
@@ -261,7 +267,7 @@ onValue(ref(db, `rooms/${ROOM_ID}/info`), snapshot => {
     document.getElementById('orderItem').textContent = info.item || '-';
     document.getElementById('orderPrice').textContent = info.price ? `¥${Number(info.price).toLocaleString()}` : '-';
     document.getElementById('orderDate').textContent = info.date ? `販売日 ${info.date}` : '-';
-    if (info.buyerName) {
+    if (info.buyerName && role === 'seller') {
       document.getElementById('topName').textContent = info.buyerName + ' さん';
       document.getElementById('topAv').textContent = info.buyerName.charAt(0);
     }
@@ -458,14 +464,7 @@ async function send() {
 }
 
 renderSteps();
-if (role === 'buyer') {
-  document.getElementById('topAv').textContent = 'C';
-  document.getElementById('topAv').className = 'av av-seller';
-  document.getElementById('topName').textContent = 'CATLES';
-  document.getElementById('sellerStepBar').style.display = 'none';
-} else {
-  document.getElementById('sellerStepBar').style.display = 'flex';
-}
+document.getElementById('sellerStepBar').style.display = role === 'seller' ? 'flex' : 'none';
 
 // --- プレゼンス管理 ---
 // 自分がトークルームを開いているかをDBに記録し、Cloud Functionsが通知判断に使う
