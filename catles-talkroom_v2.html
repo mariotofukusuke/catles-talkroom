@@ -481,6 +481,13 @@ document.addEventListener('visibilitychange', () => {
 // ウェブ設定 > ウェブプッシュ証明書 で生成してから差し替えてください
 const VAPID_KEY = 'BDeKJtSrglRWJZ91Q4sMtBUiLrwLLPNjkI_ncWlurF9c56dLFTT3eq7M9FJlehbbXC4TIbwkIf7nj7g_0BlSoNM';
 
+async function tokenKey(token) {
+  const buf = new TextEncoder().encode(token);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).slice(0, 8)
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function initNotifications() {
   console.log('initNotifications called');
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
@@ -496,8 +503,12 @@ async function initNotifications() {
       serviceWorkerRegistration: reg
     });
     console.log('FCM token:', token);
-    if (token) {
-      await set(ref(db, `rooms/${ROOM_ID}/fcmTokens/${role}`), token);
+    if (!token) return;
+    if (role === 'seller') {
+      const key = await tokenKey(token);
+      await set(ref(db, `sellerFcmTokens/${key}`), token);
+    } else {
+      await set(ref(db, `rooms/${ROOM_ID}/fcmTokens/buyer`), token);
     }
   } catch (e) {
     console.error('通知の初期化に失敗:', e);
