@@ -401,15 +401,19 @@ input.addEventListener('input', () => {
   input.style.height = Math.min(input.scrollHeight, window.innerHeight * 0.4) + 'px';
 });
 let composing = false;
+let lastCompositionEnd = 0;
 input.addEventListener('compositionstart', () => { composing = true; });
 input.addEventListener('compositionend', () => {
-  // Defer to next tick so the Enter keydown that fires synchronously
-  // right after compositionend is still treated as composing.
-  setTimeout(() => { composing = false; }, 0);
+  composing = false;
+  lastCompositionEnd = Date.now();
 });
 input.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.shiftKey) return;
   if (composing || e.isComposing || e.keyCode === 229) return;
+  // Block the Enter keydown that fires right after compositionend
+  // (Chrome PC: IME-confirm Enter → compositionend → fresh Enter keydown
+  // with isComposing=false). 100ms is below human re-tap latency.
+  if (Date.now() - lastCompositionEnd < 100) return;
   e.preventDefault();
   send();
 });
