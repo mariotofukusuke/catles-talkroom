@@ -215,6 +215,12 @@ function getDateTime() {
   return `${now.getMonth()+1}月${now.getDate()}日 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
 }
 
+function formatOrderDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}時${String(d.getMinutes()).padStart(2,'0')}分`;
+}
+
 function switchTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -266,7 +272,7 @@ onValue(ref(db, `rooms/${ROOM_ID}/info`), snapshot => {
     document.getElementById('topSub').textContent = `注文 ${info.orderName || ORDER_NAME_PARAM || '#' + ROOM_ID} · ${info.item || ''}`;
     document.getElementById('orderItem').textContent = info.item || '-';
     document.getElementById('orderPrice').textContent = info.price ? `¥${Number(info.price).toLocaleString()}` : '-';
-    document.getElementById('orderDate').textContent = info.date ? `販売日 ${info.date}` : '-';
+    document.getElementById('orderDate').textContent = info.date ? `販売日 ${formatOrderDate(info.date)}` : '-';
     if (info.buyerName && role === 'seller') {
       document.getElementById('topName').textContent = info.buyerName + ' さん';
       document.getElementById('topAv').textContent = info.buyerName.charAt(0);

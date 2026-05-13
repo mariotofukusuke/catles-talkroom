@@ -69,9 +69,12 @@ exports.shopifyOrdersCreate = onRequest(
         order.customer && order.customer.first_name,
         order.customer && order.customer.last_name,
       ].filter(Boolean).join(' ') || 'お客様';
+      const item  = (order.line_items && order.line_items[0] && order.line_items[0].title) || '';
+      const price = order.total_price || '';
+      const date  = order.created_at  || '';
 
       await db.ref(`rooms/${orderId}`).update({
-        info: { buyerName, orderName: order.name },
+        info: { buyerName, orderName: order.name, item, price, date },
         token,
       });
     }
