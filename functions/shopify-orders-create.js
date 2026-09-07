@@ -66,8 +66,8 @@ exports.shopifyOrdersCreate = onRequest(
     } else {
       token = crypto.randomBytes(32).toString('hex');
       const buyerName = [
-        order.customer && order.customer.first_name,
         order.customer && order.customer.last_name,
+        order.customer && order.customer.first_name,
       ].filter(Boolean).join(' ') || 'お客様';
       const item  = (order.line_items && order.line_items[0] && order.line_items[0].title) || '';
       const price = order.total_price || '';

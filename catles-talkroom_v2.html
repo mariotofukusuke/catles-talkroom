@@ -24,6 +24,10 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 .top-name{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top-sub{font-size:11px;color:var(--text-sub);margin-top:1px}
 .status-pill{font-size:11px;padding:3px 10px;border-radius:12px;background:#e8f4fd;color:#0c447c;font-weight:500;white-space:nowrap;flex-shrink:0}
+.notif-bar{display:none;align-items:center;gap:8px;padding:8px 12px;background:#fff8e1;border-bottom:1px solid #f0e0b0;flex-shrink:0}
+.notif-txt{flex:1;font-size:12px;color:#6b5518}
+.notif-btn{flex-shrink:0;padding:6px 12px;font-size:12px;font-weight:500;color:#fff;background:var(--pink);border:none;border-radius:14px;cursor:pointer}
+.notif-btn:disabled{opacity:.6;cursor:default}
 .tabs{display:flex;border-bottom:1px solid var(--border);background:var(--white)}
 .tab{flex:1;padding:11px 0;font-size:13px;color:var(--text-sub);text-align:center;cursor:pointer;border-bottom:2.5px solid transparent}
 .tab.active{color:var(--pink);border-bottom-color:var(--pink);font-weight:500}
@@ -108,6 +112,10 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
     <div class="tab active" onclick="switchTab('talk',this)">トーク</div>
     <div class="tab" onclick="switchTab('progress',this)">進捗</div>
     <div class="tab" onclick="switchTab('files',this)">ファイル</div>
+  </div>
+  <div class="notif-bar" id="notifBar">
+    <span class="notif-txt">新しいメッセージをお知らせします</span>
+    <button class="notif-btn" id="notifBtn">通知をオンにする</button>
   </div>
   <div class="view active" id="talkView">
     <div class="msgs" id="messages"><div class="hint">接続中...</div></div>
@@ -493,11 +501,14 @@ async function tokenKey(token) {
     .map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function initNotifications() {
+async function initNotifications({ ask = false } = {}) {
   console.log('initNotifications called');
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
   try {
-    const permission = await Notification.requestPermission();
+    // 許可を求めるのはボタンが押されたときだけ。
+    // ページ読み込み時に自動で要求すると Chrome に抑制されてダイアログが出ない
+    if (Notification.permission === 'default' && !ask) return;
+    const permission = ask ? await Notification.requestPermission() : Notification.permission;
     if (permission !== 'granted') return;
 
     const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
@@ -523,9 +534,43 @@ async function initNotifications() {
 // フォアグラウンド時はリアルタイムリスナーが画面を更新するため通知不要
 onMessage(messaging, () => {});
 
+// 通知バー：まだ許可も拒否もしていないときだけ出す
+function refreshNotifBar() {
+  const bar = document.getElementById('notifBar');
+  const btn = document.getElementById('notifBtn');
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const standalone = window.navigator.standalone === true
+    || window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !standalone) {
+    bar.style.display = 'flex';
+    document.querySelector('.notif-txt').textContent =
+      'iPhoneで通知を受け取るには、共有ボタンから「ホーム画面に追加」してお使いください';
+    btn.style.display = 'none';
+    return;
+  }
+  bar.style.display = Notification.permission === 'default' ? 'flex' : 'none';
+}
+
+document.getElementById('notifBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('notifBtn');
+  btn.disabled = true;
+  btn.textContent = '設定中...';
+  await initNotifications({ ask: true });
+  if (Notification.permission === 'granted') {
+    document.querySelector('.notif-txt').textContent = '通知をオンにしました';
+    btn.style.display = 'none';
+    setTimeout(() => { document.getElementById('notifBar').style.display = 'none'; }, 2500);
+  } else {
+    document.querySelector('.notif-txt').textContent = '通知はオフのままです（ブラウザの設定から変更できます）';
+    btn.style.display = 'none';
+  }
+});
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => initNotifications());
+  document.addEventListener('DOMContentLoaded', () => { refreshNotifBar(); initNotifications(); });
 } else {
+  refreshNotifBar();
   initNotifications();
 }
 </script>
