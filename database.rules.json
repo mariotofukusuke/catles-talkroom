@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".read": "$roomId.matches(/^[0-9a-f]{64}$/)",
+        ".write": "$roomId.matches(/^[0-9a-f]{64}$/)"
+      }
+    },
+    "orderRooms": {
+      ".read": false,
+      ".write": false
+    },
+    "sellerFcmTokens": {
+      ".read": false,
+      "$key": {
+        ".write": true
+      }
+    }
+  }
+}

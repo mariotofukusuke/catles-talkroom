@@ -156,7 +156,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Hiragino
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, set, update, onDisconnect, get } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, set, update, onDisconnect } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-storage.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-messaging.js";
 
@@ -177,8 +177,7 @@ const storage = getStorage(app);
 window.messaging = getMessaging(app);
 
 const params = new URLSearchParams(window.location.search);
-const roomParam = params.get('room');
-const ROOM_ID = roomParam || 'default';
+const ROOM_ID = params.get('room') || '';
 const CUSTOMER_NAME = decodeURIdate(params.get('name') || 'お客様');
 const ORDER_NAME_PARAM = decodeURIdate(params.get('orderName') || '');
 const roleParam = params.get('role');
@@ -188,7 +187,13 @@ function decodeURIdate(s) {
   try { return decodeURIComponent(s); } catch(e) { return s; }
 }
 
-document.getElementById('topSub').textContent = `注文 ${ORDER_NAME_PARAM || '#' + ROOM_ID}`;
+// 部屋のパスは64桁トークンそのもの。形が違うリンクはここで止める
+if (!/^[0-9a-f]{64}$/.test(ROOM_ID)) {
+  document.body.innerHTML = '<div style="padding:48px 20px;text-align:center;font-family:sans-serif;color:#333;"><h2 style="margin:0 0 12px">アクセスできません</h2><p style="margin:0;color:#666;">このリンクは無効です。<br>注文ページから再度お開きください。</p></div>';
+  throw new Error('Invalid room');
+}
+
+document.getElementById('topSub').textContent = ORDER_NAME_PARAM ? `注文 ${ORDER_NAME_PARAM}` : '';
 if (role === 'seller') {
   document.getElementById('topName').textContent = CUSTOMER_NAME + ' さん';
   document.getElementById('topAv').textContent = CUSTOMER_NAME.charAt(0);
@@ -200,21 +205,6 @@ if (role === 'seller') {
 
 const steps = ['購入完了','デザイン制作中','商品制作中','発送完了'];
 const statusLabels = ['受付済み','デザイン制作中','商品制作中','発送完了'];
-
-if (role === 'buyer') {
-  const providedToken = params.get('token');
-  const storedSnap = await get(ref(db, `rooms/${ROOM_ID}/token`));
-  const storedToken = storedSnap.val();
-  const blockHtml = '<div style="padding:48px 20px;text-align:center;font-family:sans-serif;color:#333;"><h2 style="margin:0 0 12px">アクセスできません</h2><p style="margin:0;color:#666;">このリンクは無効です。<br>注文ページから再度お開きください。</p></div>';
-  if (!storedToken) {
-    document.body.innerHTML = blockHtml;
-    throw new Error('Room not found');
-  }
-  if (providedToken && providedToken !== storedToken) {
-    document.body.innerHTML = blockHtml;
-    throw new Error('Invalid token');
-  }
-}
 
 let pending = [];
 let currentStep = 1;
@@ -278,7 +268,7 @@ function renderSteps() {
 onValue(ref(db, `rooms/${ROOM_ID}/info`), snapshot => {
   const info = snapshot.val();
   if (info) {
-    document.getElementById('topSub').textContent = `注文 ${info.orderName || ORDER_NAME_PARAM || '#' + ROOM_ID} · ${info.item || ''}`;
+    document.getElementById('topSub').textContent = `注文 ${info.orderName || ORDER_NAME_PARAM || ''} · ${info.item || ''}`;
     document.getElementById('orderItem').textContent = info.item || '-';
     document.getElementById('orderPrice').textContent = info.price ? `¥${Number(info.price).toLocaleString()}` : '-';
     document.getElementById('orderDate').textContent = info.date ? `販売日 ${formatOrderDate(info.date)}` : '-';
@@ -287,7 +277,7 @@ onValue(ref(db, `rooms/${ROOM_ID}/info`), snapshot => {
       document.getElementById('topAv').textContent = info.buyerName.charAt(0);
     }
   } else {
-    document.getElementById('topSub').textContent = `注文 ${ORDER_NAME_PARAM || '#' + ROOM_ID}`;
+    document.getElementById('topSub').textContent = ORDER_NAME_PARAM ? `注文 ${ORDER_NAME_PARAM}` : '';
   }
 });
 

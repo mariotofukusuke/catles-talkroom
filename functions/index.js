@@ -2,7 +2,6 @@ const { onValueCreated } = require('firebase-functions/v2/database');
 const { initializeApp }  = require('firebase-admin/app');
 const { getDatabase }    = require('firebase-admin/database');
 const { getMessaging }   = require('firebase-admin/messaging');
-const crypto             = require('crypto');
 
 initializeApp();
 
@@ -85,26 +84,6 @@ exports.sendPushOnMessage = onValueCreated(
       }
     }));
 
-    return null;
-  }
-);
-
-exports.generateRoomToken = onValueCreated(
-  {
-    ref: 'rooms/{roomId}/info',
-    region: 'asia-southeast1',
-    instance: 'catles-talkroom-default-rtdb'
-  },
-  async (event) => {
-    const { roomId } = event.params;
-    const db = getDatabase();
-    const tokenRef = db.ref(`rooms/${roomId}/token`);
-
-    const existing = await tokenRef.get();
-    if (existing.exists()) return null;
-
-    const token = crypto.randomBytes(32).toString('hex');
-    await tokenRef.set(token);
     return null;
   }
 );

@@ -57,8 +57,9 @@ exports.shopifyOrdersCreate = onRequest(
     const orderId = String(order.id);
 
     const db = getDatabase();
-    const tokenRef = db.ref(`rooms/${orderId}/token`);
-    const existing = await tokenRef.get();
+    // 部屋のパスはトークンそのもの。注文IDから引くための索引は読み取り禁止ノードに置く
+    const indexRef = db.ref(`orderRooms/${orderId}`);
+    const existing = await indexRef.get();
 
     let token;
     if (existing.exists()) {
@@ -73,10 +74,10 @@ exports.shopifyOrdersCreate = onRequest(
       const price = order.total_price || '';
       const date  = order.created_at  || '';
 
-      await db.ref(`rooms/${orderId}`).update({
-        info: { buyerName, orderName: order.name, item, price, date },
-        token,
+      await db.ref(`rooms/${token}/info`).set({
+        buyerName, orderName: order.name, item, price, date,
       });
+      await indexRef.set(token);
     }
 
     const url = `https://${SHOP_DOMAIN}/admin/api/${API_VERSION}/graphql.json`;
